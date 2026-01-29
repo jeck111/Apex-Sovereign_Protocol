@@ -10,3 +10,8 @@ This repository contains the smart contracts for the **APEX (APX)** and **SOVERE
 - **Language**: Solidity ^0.8.20
 - **Framework**: OpenZeppelin
 - **Network**: Polygon / BSC / Ethereum
+Apex-Sovereign Protocol
+The Global Reserve for the Elite.
+This protocol is built to reshape the Earth's economy.
+APEX: A high-speed reserve coin with a 2% Earth Tax for global sustainability.
+SOVEREIGN: An ultra-limited governance token for world leaders and decision-makers.
