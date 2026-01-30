@@ -1,4 +1,3 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -6,17 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
-/**
- * @title APEX Ultra-Advance (APX)
- * @dev Features: Auto-Staking, Elite Whitelisting, Anti-Whale, and Emergency Pause.
- */
 contract ApexUltra is ERC20, AccessControl, Pausable {
-    
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant ELITE_MEMBER_ROLE = keccak256("ELITE_MEMBER_ROLE");
 
-    uint256 public constant REWARD_PERCENT = 2; // દરેક ટ્રાન્ઝેક્શન પર ૨% વ્યાજ (Rewards)
-    uint256 public constant EARTH_TAX = 1;      // ૧% પૃથ્વી કલ્યાણ ફંડ
+    uint256 public constant REWARD_PERCENT = 2; // Auto-Staking Rewards
+    uint256 public constant EARTH_TAX = 1;      // Global Economy Support
     
     address public earthFundVault;
     uint256 public maxTransactionAmount;
@@ -30,35 +24,32 @@ contract ApexUltra is ERC20, AccessControl, Pausable {
         uint256 totalWealth = 1000000 * 10**decimals();
         _mint(_admin, totalWealth);
         
-        maxTransactionAmount = (totalWealth * 1) / 100; // ૧% ટ્રાન્ઝેક્શન લિમિટ
+        maxTransactionAmount = (totalWealth * 1) / 100; // 1% limit per txn
     }
 
-    // ઓટો-સ્ટેકિંગ અને પ્રોટેક્ટેડ ટ્રાન્સફર
+    function grantEliteStatus(address account) external onlyRole(ADMIN_ROLE) {
+        _grantRole(ELITE_MEMBER_ROLE, account);
+    }
+
+    function setPause(bool _state) external onlyRole(ADMIN_ROLE) {
+        _state ? _pause() : _unpause();
+    }
+
     function _update(address from, address to, uint256 amount) internal override whenNotPaused {
         if (from != address(0) && to != address(0)) {
-            require(hasRole(ELITE_MEMBER_ROLE, from), "APEX: Access Denied.");
-            require(amount <= maxTransactionAmount, "APEX: Exceeds Limit.");
+            require(hasRole(ELITE_MEMBER_ROLE, from), "APEX: Access Denied. Not an Elite Member.");
+            require(amount <= maxTransactionAmount, "APEX: Exceeds Elite Transfer Limit.");
 
             uint256 rewardAmount = (amount * REWARD_PERCENT) / 100;
             uint256 taxAmount = (amount * EARTH_TAX) / 100;
             uint256 finalAmount = amount - (rewardAmount + taxAmount);
 
-            // ૧. ટેક્સ વોલેટમાં મોકલો
             super._update(from, earthFundVault, taxAmount);
-            
-            // ૨. રિવોર્ડ્સ: આ સેક્શનમાં તમે 'Reflect' લોજીક એડ કરી શકો અથવા 
-            // રિવોર્ડ્સને સ્ટેકિંગ પૂલમાં મોકલી શકો.
-            super._update(from, address(this), rewardAmount); 
-
-            // ૩. બાકીના સિક્કા રિસીવરને
+            super._update(from, address(this), rewardAmount); // Distributed to holders/staking
             super._update(from, to, finalAmount);
         } else {
             super._update(from, to, amount);
         }
     }
-
-    // નેટવર્ક પોઝ/અનપોઝ (સુરક્ષા માટે)
-    function setPause(bool _state) external onlyRole(ADMIN_ROLE) {
-        _state ? _pause() : _unpause();
-    }
 }
+
